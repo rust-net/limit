@@ -1,5 +1,9 @@
-name: test
+name: dev
 
 services:
-  app:
+  limit:
     build: .
+    network_mode: host
+    command: -i enp3s0 -l 50G
+    volumes:
+      - /:/host
