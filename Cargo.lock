@@ -93,6 +93,8 @@ dependencies = [
  "ifcfg",
  "macro-log",
  "regex 1.11.1",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

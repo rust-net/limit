@@ -7,3 +7,7 @@ services:
     command: -i enp3s0 -l 50G
     volumes:
       - /:/host
+      - limit:/limit
+
+volumes:
+  limit:
