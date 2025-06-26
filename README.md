@@ -3,7 +3,15 @@
 
 ## install
 ```
-sudo docker run -itd --name="limit" --restart="always" --net="host" -v limit:/limit -v /:/host imgxx/limit -i enp3s0 -l 1G
+# show interfaces
+sudo docker run --rm -it --name="test" --net="host" imgxx/limit
+
+# help
+sudo docker run --rm -it --name="test" --net="host" imgxx/limit -h
+
+# run
+sudo docker run -itd --name="limit" --restart="always" --net="host" -v limit:/limit -v /:/host imgxx/limit -i enp3s0 -l 100G
+sudo docker logs -f limit
 ```
 
 ## dev
