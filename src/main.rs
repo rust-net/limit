@@ -64,6 +64,16 @@ fn main() -> std::io::Result<()> {
         history.cycle = date;
     }
     macro_log::i!("{:?}", history);
+    // 处理流量达限状态
+    let mut overflow = 0;
+    if history.before + history.this_time > limit {
+        macro_log::w!(
+            "流量已超出限制，本次启动您还可以再使用 {} 流量",
+            &args.overflow
+        );
+        overflow =
+            (history.before + history.this_time - limit) + limit_to_byte(&args.overflow) as i128;
+    }
 
     if !std::fs::exists(DIR_LIMIT_HISTORY)? {
         std::fs::create_dir(DIR_LIMIT_HISTORY)?;
@@ -81,6 +91,19 @@ fn main() -> std::io::Result<()> {
             macro_log::e!("Failed to get_interface_rtx: {}", interface);
             return Ok(());
         };
+
+        let output = exec("date", &mut vec!["-I"])?;
+        let date = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if regex.is_match(&date) && date != history.cycle {
+            macro_log::i!("周期日到，重置流量");
+            history.cycle = date;
+            history.before = -rtx;
+            history.this_time = rtx;
+            history.total = format!("{:.2} GB", 0);
+            let value = serde_json::to_string_pretty(&history)?;
+            std::fs::write(PATH_LIMIT_HISTORY, value)?;
+        }
+
         // 实时累计流量 = 历史流量 + 本次开机以来流量
         let total = history.before + rtx;
         macro_log::i!(
@@ -88,16 +111,17 @@ fn main() -> std::io::Result<()> {
             rtx as f64 / 1024.0 / 1024.0 / 1024.0,
             total as f64 / 1024.0 / 1024.0 / 1024.0
         );
+
         // 距离上次时写入记录文件时的流量
         let diff = rtx - history.this_time;
         // 流量超过 1MB 或即将关机, 写入记录文件
-        if diff > (1.0 * 1024.0 * 1024.0) as i128 || history.before + rtx > limit {
+        if diff > (1.0 * 1024.0 * 1024.0) as i128 || history.before + rtx > limit + overflow {
             history.this_time = rtx;
             history.total = format!("{:.2} GB", total as f64 / 1024.0 / 1024.0 / 1024.0);
             let value = serde_json::to_string_pretty(&history)?;
             std::fs::write(PATH_LIMIT_HISTORY, value)?;
         }
-        if total > limit {
+        if total > limit + overflow {
             macro_log::w!("流量超出限制，关机中...");
             let output = exec("poweroff", &mut vec![])?;
             output
@@ -117,17 +141,5 @@ fn main() -> std::io::Result<()> {
                 });
         }
         sleep(Duration::from_secs(10));
-
-        let output = exec("date", &mut vec!["-I"])?;
-        let date = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        if regex.is_match(&date) && date != history.cycle {
-            macro_log::i!("周期日到，重置流量");
-            history.cycle = date;
-            history.before = -rtx;
-            history.this_time = rtx;
-            history.total = format!("{:.2} GB", 0);
-            let value = serde_json::to_string_pretty(&history)?;
-            std::fs::write(PATH_LIMIT_HISTORY, value)?;
-        }
     }
 }

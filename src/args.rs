@@ -18,10 +18,14 @@ pub struct Args {
     /// 流量重置日期
     #[arg(short, long, default_value_t = 1)]
     pub reset_day: u8,
+
+    /// 流量超出限制后单次开机允许的溢出大小
+    #[arg(short, long, default_value = "10G", value_parser = validate_limit)]
+    pub overflow: String,
 }
 
 fn validate_limit(s: &str) -> Result<String, String> {
-    let regex = Regex::new(r"^\d+(\.?\d+)?[KMG]B?$").unwrap();
+    let regex = Regex::new(r"^\d+(\.?\d+)?\ ?[KMG]B?$").unwrap();
     if regex.is_match(s) {
         Ok(s.to_string())
     } else {
@@ -30,7 +34,7 @@ fn validate_limit(s: &str) -> Result<String, String> {
 }
 
 pub fn limit_to_byte(limit: &str) -> f64 {
-    let regex = Regex::new(r"^(\d+(\.?\d+)?)([KMG])B?$").unwrap();
+    let regex = Regex::new(r"^(\d+(\.?\d+)?)\ ?([KMG])B?$").unwrap();
     let caps = regex.captures(limit).unwrap();
     match caps.get(3).unwrap().as_str() {
         "K" => 1024.0 * caps.get(1).unwrap().as_str().parse::<f64>().unwrap(),
@@ -65,4 +69,5 @@ fn test_limit_to_byte() {
     assert_eq!(limit_to_byte("1.1KB"), 1126.4);
     assert_eq!(limit_to_byte("1.1111MB"), 1024.0 * 1024.0 * 1.1111);
     assert_eq!(limit_to_byte("100GB"), 100.0 * 1024.0 * 1024.0 * 1024.0);
+    assert_eq!(limit_to_byte("100 GB"), 100.0 * 1024.0 * 1024.0 * 1024.0);
 }
