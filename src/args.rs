@@ -14,6 +14,10 @@ pub struct Args {
     /// 流量限制大小
     #[arg(short, long, default_value = "50G", value_parser = validate_limit)]
     pub limit: String,
+
+    /// 流量重置日期
+    #[arg(short, long, default_value_t = 1)]
+    pub reset_day: u8,
 }
 
 fn validate_limit(s: &str) -> Result<String, String> {
