@@ -1,4 +1,4 @@
-mod args;
+pub mod args;
 mod docker;
 mod interfaces;
 
@@ -7,9 +7,9 @@ use std::{thread::sleep, time::Duration};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    args::{limit_to_byte, parse_args},
+    args::{limit_to_byte, Args},
     docker::{exec, is_running_in_docker},
-    interfaces::get_interface_rtx,
+    interfaces::{get_interface_rtx, help_interfaces},
 };
 
 const DIR_LIMIT_HISTORY: &'static str = "/limit";
@@ -29,12 +29,12 @@ struct History {
     total: String,
 }
 
-fn main() -> std::io::Result<()> {
-    let Some(args) = parse_args() else {
+pub fn main(args: Args) -> std::io::Result<()> {
+    let interface = &args.interface.unwrap_or_default();
+    if args.ls || interface.is_empty() {
+        help_interfaces();
         return Ok(());
-    };
-
-    let interface = &args.interface;
+    }
     let limit = &args.limit;
     let reset_day = args.reset_day;
     macro_log::i!(

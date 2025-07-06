@@ -1,10 +1,8 @@
 /// 获取 `enp3s0`, `docker0` 形式的接口名称
+#[allow(unused)]
 pub fn get_interfaces() -> Vec<String> {
     let ifaces = ifcfg::IfCfg::get().expect("could not get interfaces");
-    ifaces
-        .iter()
-        .map(|it| it.name.clone())
-        .collect()
+    ifaces.iter().map(|it| it.name.clone()).collect()
 }
 
 /// 获取 `enp3s0(192.168.1.144)`, `lo(127.0.0.1)` 形式的接口信息
@@ -59,13 +57,11 @@ pub fn get_interface_rtx(interface: &str) -> std::io::Result<i128> {
 
 pub fn help_interfaces() {
     let interfaces = get_interfaces_and_ipv4s();
-    let names = interfaces.join(" | ");
+    let names = interfaces.join("\n    - ");
     println!(
-        r#"error: the following required arguments were not provided:
-  -i, --interface <INTERFACE>
-                  {names}
-
-For more information, try '--help'.
-"#
+        r#"interfaces:
+    - {names}
+run with:
+    -i, --interface <INTERFACE>"#
     );
 }

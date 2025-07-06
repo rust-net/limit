@@ -4,12 +4,16 @@ use regex::Regex;
 use crate::interfaces::help_interfaces;
 
 /// 流量超出限制自动关机程序
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 pub struct Args {
+    /// 查询接口
+    #[arg(long)]
+    pub ls: bool,
+
     /// 网络接口名
     #[arg(short, long)]
-    pub interface: String,
+    pub interface: Option<String>,
 
     /// 流量限制大小
     #[arg(short, long, default_value = "50G", value_parser = validate_limit)]
